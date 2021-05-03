@@ -1,3 +1,6 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:9bca3b707229dc97de7d3e8e74496da6f5f69896f3258c067558b98749bdf74d
-size 52
+lfw/
+logs/
+.spyproject/
+.idea/
+.ipynb_checkpoints/
+__pycache__/

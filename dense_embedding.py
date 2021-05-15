@@ -57,18 +57,46 @@ sys.exit()
 
 # %%
 
+EPOCHS = 10
+SHUFFLE_BUFFER = 100
+BATCH_SIZE = 32
+PREFETCH_BUFFER = 8
 
-def estimator_input_fn(df_data, df_label, epochs=10, shuffle=True, batch_size=32):
+
+def estimator_input_fn(df_data, df_label, train=True):
     ds = tf.data.Dataset.from_tensor_slices((df_data, df_label))
-    if shuffle:
-        ds = ds.shuffle(100)
-    ds = ds.batch(batch_size).repeat(epochs)
+    if train:
+        ds = ds.repeat(EPOCHS)
+        ds = ds.shuffle(SHUFFLE_BUFFER, seed=0)
+    ds = ds.batch(BATCH_SIZE)
+    if train:
+        ds = ds.prefetch(PREFETCH_BUFFER)
+    options = tf.data.Options()
+    options.experimental_deterministic = not train
+    options.experimental_optimization.autotune = True
+    options.experimental_optimization.autotune_buffers = True
+    options.experimental_optimization.filter_fusion = True
+    options.experimental_optimization.hoist_random_uniform = True
+    options.experimental_optimization.map_and_batch_fusion = True
+    options.experimental_optimization.map_and_filter_fusion = False
+    options.experimental_optimization.map_fusion = True
+    options.experimental_optimization.map_parallelization = True
+    options.experimental_optimization.map_vectorization.enabled = True
+    options.experimental_optimization.map_vectorization.use_choose_fastest = True
+    options.experimental_optimization.noop_elimination = True
+    options.experimental_optimization.parallel_batch = True
+    options.experimental_optimization.shuffle_and_repeat_fusion = True
+    options.experimental_optimization.apply_default_optimizations = False
+    options.experimental_threading.max_intra_op_parallelism = 1
+    options.experimental_threading.private_threadpool_size = 8
+    options.experimental_distribute.auto_shard_policy = AutoShardPolicy.AUTO
+    ds = ds.with_options(options)
     return ds
 
 
 train_input_fn = estimator_input_fn(X_train, y_train_label)
-val_input_fn = estimator_input_fn(
-    X_test, y_test_label, epochs=1, shuffle=False)
+val_input_fn = estimator_input_fn(X_test, y_test_label,
+                                  train=False)
 x_shape = None
 
 for x, y in train_input_fn:

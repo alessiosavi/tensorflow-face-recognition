@@ -22,23 +22,24 @@ import tensorflow_datasets as tfds
 import cv2
 from tensorflow.keras import layers
 import shutil
+from mtcnn import MTCNN
 from os.path import join as pjoin
-gpus = tf.config.experimental.list_physical_devices('GPU')
-tf.config.experimental.set_memory_growth(gpus[0], True)
+# gpus = tf.config.experimental.list_physical_devices('GPU')
+# tf.config.experimental.set_memory_growth(gpus[0], True)
 # %%
-basedir = "/opt/SP/workspace/JupyterLab/Tensorflow-Certification/FaceRecognition/lfw"
+basedir = "/opt/Workspace/JupyterLab/Tensorflow-Certification/FaceRecognition/lfw"
 train_size = 0.8
-# face_detector = MTCNN()
+
+face_detector = MTCNN()
 img_height, img_width = 224, 224
 batch_size = 32
-
-# %%
 
 
 # %%
 
 
 def extract_faces(filename="", image=None):
+    
     faces = []
     # load image from file
     if image is None:
@@ -188,7 +189,7 @@ train_data_gen = datagen.flow_from_directory(batch_size=batch_size,
                                              directory=train_dir,
                                              shuffle=True,
                                              target_size=(
-                                                img_height, img_width),
+                                                 img_height, img_width),
                                              class_mode='sparse')
 
 image_gen_val = tf.keras.preprocessing.image.ImageDataGenerator(rescale=1./255)
@@ -198,7 +199,7 @@ val_data_gen = image_gen_val.flow_from_directory(
 
 # %%
 URL = "https://tfhub.dev/google/tf2-preview/mobilenet_v2/feature_vector/4"
-feature_extractor = hub.KerasLayer(URL,input_shape=(img_height, img_width, 3))
+feature_extractor = hub.KerasLayer(URL, input_shape=(img_height, img_width, 3))
 feature_extractor.trainable = False
 # %% CREATE MODEL
 log_dir = "/opt/SP/workspace/JupyterLab/Tensorflow-Certification/FaceRecognition/logs/conv_image/" + \
@@ -209,8 +210,8 @@ tensorboard_callback = tf.keras.callbacks.TensorBoard(
 n_classes = len(val_data_gen.class_indices)
 
 model = tf.keras.Sequential([
-  feature_extractor,
-  layers.Dense(n_classes)
+    feature_extractor,
+    layers.Dense(n_classes)
 ])
 
 # model = tf.keras.Sequential(
